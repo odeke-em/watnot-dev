@@ -56,6 +56,18 @@ func CatOnWriteChange(paths ...string) {
 	}
 }
 
+func write(mask fsnotify.Op) bool {
+	return (mask & fsnotify.Write) != 0
+}
+
+func create(mask fsnotify.Op) bool {
+	return (mask & fsnotify.Create) != 0
+}
+
+func delete(mask fsnotify.Op) bool {
+	return (mask & fsnotify.Create) != 0
+}
+
 func NewWatcher(paths ...string) (changesChan chan string) {
 	changesChan = make(chan string)
 
@@ -85,7 +97,8 @@ func NewWatcher(paths ...string) (changesChan chan string) {
 			for {
 				select {
 				case event := <-w.Events:
-					if (event.Op & fsnotify.Write) == fsnotify.Write {
+					mask := event.Op
+					if create(mask) || write(mask) || delete(mask) {
 						changesChan <- event.Name
 					}
 
